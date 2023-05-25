@@ -1,0 +1,89 @@
+import unittest
+
+from flask import json
+
+from unittest.mock import patch
+
+from your_app import app
+
+class AppTestCase(unittest.TestCase):
+
+    def setUp(self):
+
+        app.testing = True
+
+        self.app = app.test_client()
+
+    @patch('your_app.client')
+
+    def test_create_orders_valid_input(self, mock_client):
+
+        payload = {
+
+            'symbol': 'BTCUSDT',
+
+            'num_orders': 5,
+
+            'volume': 10.0,
+
+            'price_min': 40000.0,
+
+            'price_max': 41000.0,
+
+            'amount_dif': 0.1
+
+        }
+
+        mock_order = {
+
+            'symbol': payload['symbol'],
+
+            'side': 'BUY',
+
+            'type': 'LIMIT',
+
+            'quantity': 2.0,
+
+            'price': 40001.0,
+
+        }
+
+        mock_client.create_order.return_value = mock_order
+
+        response = self.app.post('/create_orders', json=payload)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(len(data), payload['num_orders'])
+
+    def test_create_orders_invalid_input(self):
+
+        payload = {
+
+            'symbol': 'BTCUSDT',
+
+            'num_orders': -1,  # Недопустимое значение
+
+            'volume': 1.0,
+
+            'price_min': 40000.0,
+
+            'price_max': 41000.0,
+
+            'amount_dif': 0.1
+
+        }
+
+        response = self.app.post('/create_orders', json=payload)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 400)
+
+        self.assertEqual(data, {'error': "'num_orders' should be a positive integer."})
+
+if name == 'main':
+
+    unittest.main()
